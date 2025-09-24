@@ -1,11 +1,12 @@
 # 🪽 Phasmo Client >> Beta
 - Phasmo Client - this is Hacked Minecraft Client for GrimAC (like AresMine) and a strong anticheats, based on [ThunderHack Recode](https://github.com/Pan4ur/ThunderHack-Recode)
 # ⚒️ Credits / Links
-- ph4smobl4de, also thx min0r and Z1G4M3T
+- ph4smobl4de, also thx min0r, Z1G4M3T and qqsod
 - Telegram Channel of Phasmo Client: https://t.me/phasmoclient
 - ph4smobl4de: https://www.youtube.com/@ph4smobl4de / https://t.me/shawtywantsme
 - min0r: https://www.youtube.com/@min0rew
 - Z1G4M3T: https://www.youtube.com/@z1g4m3t
+- qqsod: https://www.youtube.com/@qqsod
 
 # ❓ How to Download?
 > [!WARNING]
