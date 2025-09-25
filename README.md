@@ -17,14 +17,15 @@ To run client, you needed:
 
 # 🖼️ ScreenShots
 
-HUD (With new watermark)
+- Hud and Visuals
 
-<img width="1918" height="1005" alt="image" src="https://github.com/user-attachments/assets/a9dd6028-23ec-4f09-88a7-b7ead046d4a5" />
+<img width="1919" height="1004" alt="image" src="https://github.com/user-attachments/assets/a8e17141-26ba-43c6-b4da-1f6804a1f07e" />
 
-HUD (With old watermark (from ThunderHack))
+- ClickGUI
 
-<img width="1919" height="1004" alt="image" src="https://github.com/user-attachments/assets/a19ac07e-e016-4737-9935-a68c2168d6bb" />
+<img width="1589" height="993" alt="image" src="https://github.com/user-attachments/assets/a4ba9f72-2437-4725-85e8-42c3cb39c5b9" />
 
-ClickGUI
+- MainMenu
 
-<img width="1918" height="1005" alt="image" src="https://github.com/user-attachments/assets/7c98443a-ccbd-4362-b05e-22706587ad7b" />
+<img width="1916" height="1003" alt="image" src="https://github.com/user-attachments/assets/9f69d5f3-aa1b-439f-8217-79be5aa5905a" />
+
