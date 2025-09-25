@@ -12,15 +12,39 @@ import thunder.hack.utility.render.Render2DEngine;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import thunder.hack.utility.hud.HudFontHelper;
+import thunder.hack.setting.Setting;
 
 public class PVPResources extends HudElement {
     public PVPResources() {
         super("PVPResources", 50, 50);
     }
-
-    public void onRender2D(DrawContext context) {
+    
+    // Настройки фона
+    private final Setting<Boolean> showBackground = new Setting<>("ShowBackground", true);
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100);
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true);
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f);
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f);
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 0f, 0f, 8f);
+public void onRender2D(DrawContext context) {
         super.onRender2D(context);
-        Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), 50, 50, HudEditor.hudRound.getValue());
+        
+        // Рисуем фон с учетом настроек
+        if (showBackground.getValue()) {
+            float alpha = backgroundTransparency.getValue() / 100f;
+            Color bgColor = HudEditor.blurColor.getValue().getColorObject();
+            bgColor = new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), (int) (alpha * 255));
+            
+            if (enableBlur.getValue()) {
+                float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), 50, 50, 
+                    cornerRadius.getValue(), bgColor, blurStrength.getValue(), finalBlurOpacity);
+            } else {
+                Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), 50, 50, 
+                    cornerRadius.getValue(), alpha, bgColor, bgColor, bgColor, bgColor);
+            }
+        }
 
         setBounds(getPosX(), getPosY(), 50, 50);
 

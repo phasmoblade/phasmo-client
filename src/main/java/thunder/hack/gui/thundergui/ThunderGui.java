@@ -225,7 +225,7 @@ public class ThunderGui extends Screen {
         context.getMatrices().push();
         context.getMatrices().scale(0.85f, 0.85f, 1);
         context.getMatrices().translate((main_posX + 10) / 0.85, (main_posY + 15) / 0.85, 0);
-        FontRenderers.thglitch.drawString(context.getMatrices(), "THUNDERHACK", 0, 0, ThunderHackGui.getColorByTheme(2).getRGB());
+        FontRenderers.thglitch.drawString(context.getMatrices(), "PHASMOCLIENT", 0, 0, ThunderHackGui.getColorByTheme(2).getRGB());
         context.getMatrices().translate(-(main_posX + 10) / 0.85, -(main_posY + 15) / 0.85, 0);
         context.getMatrices().scale(1, 1, 1);
         context.getMatrices().pop();
@@ -474,7 +474,7 @@ public class ThunderGui extends Screen {
         }
         if (isHoveringItem(main_posX + 105, main_posY + 14, 11, 11, (float) mouseX, (float) mouseY)) {
             try {
-                net.minecraft.util.Util.getOperatingSystem().open(new File("ThunderHackRecode/configs/").toURI());
+                net.minecraft.util.Util.getOperatingSystem().open(new File("PhasmoClient/configs/").toURI());
             } catch (Exception e) {
                 Command.sendMessage("Не удалось открыть проводник!");
             }

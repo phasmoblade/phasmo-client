@@ -65,6 +65,7 @@ public class WaterMarkNew extends HudElement {
     private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true);
     private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f);
     private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f);
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 3f, 0f, 10f, v -> showBackground.getValue());
 
     // Вспомогательные методы для работы с шрифтами
     private float getStringWidth(String text) {
@@ -219,7 +220,7 @@ public class WaterMarkNew extends HudElement {
                 info.append(" | ");
                 totalWidth += getStringWidth(" | ");
             }
-            String version = "v1.0.0";
+            String version = "v1.3.0";
             info.append(version);
             totalWidth += getStringWidth(version);
         }
@@ -260,17 +261,17 @@ public class WaterMarkNew extends HudElement {
                                         (int)(alpha * 255));
                 // Применяем прозрачность к blurOpacity
                 float finalBlurOpacity = blurOpacity.getValue() * alpha;
-                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), totalWidth, 15f, 3, bgColor, blurStrength.getValue(), finalBlurOpacity);
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), totalWidth, 15f, cornerRadius.getValue(), bgColor, blurStrength.getValue(), finalBlurOpacity);
             } else {
                 // Обычный фон без размытия
                 if (alpha >= 1.0f) {
-                    Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), totalWidth, 15f, 3, HudEditor.blurColor.getValue().getColorObject());
+                    Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), totalWidth, 15f, cornerRadius.getValue(), HudEditor.blurColor.getValue().getColorObject());
                 } else {
                     Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
                                             HudEditor.blurColor.getValue().getColorObject().getGreen(), 
                                             HudEditor.blurColor.getValue().getColorObject().getBlue(), 
                                             (int)(alpha * 255));
-                    Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), totalWidth, 15f, 3f, alpha, bgColor, bgColor, bgColor, bgColor);
+                    Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), totalWidth, 15f, cornerRadius.getValue(), alpha, bgColor, bgColor, bgColor, bgColor);
                 }
             }
         }
@@ -331,7 +332,7 @@ public class WaterMarkNew extends HudElement {
         }
 
         if (showVersion.getValue()) {
-            info.append("v1.0.0");
+            info.append("v1.3.0");
             if (showSeparators.getValue()) info.append(" | ");
         }
 
@@ -365,14 +366,14 @@ public class WaterMarkNew extends HudElement {
                                         (int)(alpha * 255));
                 // Применяем прозрачность к blurOpacity
                 float finalBlurOpacity = blurOpacity.getValue() * alpha;
-                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), width, 10, 3, bgColor, blurStrength.getValue(), finalBlurOpacity);
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), width, 10, cornerRadius.getValue(), bgColor, blurStrength.getValue(), finalBlurOpacity);
             } else {
                 // Обычный фон без размытия
                 Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
                                         HudEditor.blurColor.getValue().getColorObject().getGreen(), 
                                         HudEditor.blurColor.getValue().getColorObject().getBlue(), 
                                         (int)(alpha * 255));
-                Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), width, 10, 3f, alpha, bgColor, bgColor, bgColor, bgColor);
+                Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), width, 10, cornerRadius.getValue(), alpha, bgColor, bgColor, bgColor, bgColor);
             }
         }
         

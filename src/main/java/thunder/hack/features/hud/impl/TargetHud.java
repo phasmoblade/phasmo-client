@@ -32,12 +32,14 @@ import thunder.hack.features.modules.combat.AutoCrystal;
 import thunder.hack.features.modules.misc.NameProtect;
 import thunder.hack.setting.Setting;
 import thunder.hack.setting.impl.ColorSetting;
+import thunder.hack.setting.impl.BooleanSettingGroup;
 import thunder.hack.utility.ThunderUtility;
 import thunder.hack.utility.Timer;
 import thunder.hack.utility.math.MathUtility;
 import thunder.hack.utility.render.Render2DEngine;
 import thunder.hack.utility.render.Render3DEngine;
 import thunder.hack.utility.render.TextureStorage;
+import thunder.hack.utility.render.animation.AnimationUtility;
 import thunder.hack.utility.render.animation.EaseOutBack;
 import thunder.hack.utility.render.animation.EaseOutCirc;
 
@@ -57,6 +59,19 @@ public class TargetHud extends HudElement {
     private final Setting<Boolean> funTimeHP = new Setting<>("FunTimeHP", false);
     private final Setting<Boolean> mini = new Setting<>("Mini", false, v -> Mode.getValue() == ModeEn.NurikZapen);
     private final Setting<Boolean> absorp = new Setting<>("Absorption", true);
+    
+    // Настройки прозрачности фона
+    private final Setting<BooleanSettingGroup> backgroundSettings = new Setting<>("Background", new BooleanSettingGroup(true));
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100).addToGroup(backgroundSettings);
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true).addToGroup(backgroundSettings);
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 3f, 0f, 10f, v -> backgroundSettings.getValue().isEnabled()).addToGroup(backgroundSettings);
+    
+    // Настройки для режима New
+    private final Setting<Boolean> showAbsorption = new Setting<>("ShowAbsorption", true, v -> Mode.getValue() == ModeEn.New);
+    private final Setting<Boolean> showHealthPercent = new Setting<>("ShowHealthPercent", true, v -> Mode.getValue() == ModeEn.New);
+    private final Setting<Float> scale = new Setting<>("Scale", 1.0f, 0.5f, 2.0f, v -> Mode.getValue() == ModeEn.New);
 
     private static Identifier custom;
 
@@ -126,8 +141,8 @@ public class TargetHud extends HudElement {
                         renderMiniNurik(context, health, animationFactor);
                     else
                         renderNurik(context, health, animationFactor);
-
                 }
+                case New -> renderNew(context, health, animationFactor);
             }
         }
         context.getMatrices().pop();
@@ -370,9 +385,32 @@ public class TargetHud extends HudElement {
     private void renderThunderHack(DrawContext context, float health, float animationFactor) {
         float hurtPercent = target.hurtTime / 6f;
 
-        // Основа
-        Render2DEngine.drawRound(context.getMatrices(), getPosX(), getPosY(), 70, 50, 6, new Color(0, 0, 0, 139));
-        Render2DEngine.drawRound(context.getMatrices(), getPosX() + 50, getPosY(), 100, 50, 6, new Color(0, 0, 0, 255));
+        // Основа с настройками прозрачности
+        if (backgroundSettings.getValue().isEnabled()) {
+            float alpha = backgroundTransparency.getValue() / 100f * animationFactor;
+            
+            if (enableBlur.getValue()) {
+                // Размытый фон
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(),
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(),
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(),
+                                        (int)(alpha * 139));
+                Color bgColor2 = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(),
+                                         HudEditor.blurColor.getValue().getColorObject().getGreen(),
+                                         HudEditor.blurColor.getValue().getColorObject().getBlue(),
+                                         (int)(alpha * 255));
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), 70, 50, cornerRadius.getValue(), 
+                        bgColor, blurStrength.getValue(), blurOpacity.getValue() * alpha);
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX() + 50, getPosY(), 100, 50, cornerRadius.getValue(), 
+                        bgColor2, blurStrength.getValue(), blurOpacity.getValue() * alpha);
+            } else {
+                // Обычный фон
+                Color bgColor = new Color(0, 0, 0, (int)(139 * alpha));
+                Color bgColor2 = new Color(0, 0, 0, (int)(255 * alpha));
+                Render2DEngine.drawRound(context.getMatrices(), getPosX(), getPosY(), 70, 50, cornerRadius.getValue(), bgColor);
+                Render2DEngine.drawRound(context.getMatrices(), getPosX() + 50, getPosY(), 100, 50, cornerRadius.getValue(), bgColor2);
+            }
+        }
         setBounds(getPosX(), getPosY(), 150, 50);
         // Картинка
 
@@ -578,6 +616,157 @@ public class TargetHud extends HudElement {
         return "pon";
     }
 
+    private void renderNew(DrawContext context, float health, float animationFactor) {
+        float x = getPosX();
+        float y = getPosY();
+        float width = 90f * scale.getValue();
+        float height = 28f * scale.getValue();
+
+        // Анимация появления/исчезновения
+        context.getMatrices().push();
+        context.getMatrices().translate(x + width / 2, y + height / 2, 0);
+        context.getMatrices().scale(animationFactor, animationFactor, 1);
+        context.getMatrices().translate(-(x + width / 2), -(y + height / 2), 0);
+
+        // Обновляем здоровье и абсорбцию
+        float targetHealth = MathUtility.clamp(target.getHealth() / target.getMaxHealth(), 0, 1);
+        float targetAbsorption = MathUtility.clamp(target.getAbsorptionAmount() / target.getMaxHealth(), 0, 1);
+
+        if (target.getAbsorptionAmount() <= 0) {
+            targetAbsorption = 0;
+        }
+
+        healthAnimation.setValue(targetHealth);
+        float currentHealth = (float) healthAnimation.getAnimationD();
+        float currentAbsorption = AnimationUtility.fast(0, targetAbsorption, 9);
+
+        // Рисуем фон с настройками прозрачности
+        if (backgroundSettings.getValue().isEnabled()) {
+            float alpha = backgroundTransparency.getValue() / 100f * animationFactor;
+            
+            if (enableBlur.getValue()) {
+                // Размытый фон с настройками
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(),
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(),
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(),
+                                        (int)(alpha * 255));
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), x, y, width, height, cornerRadius.getValue(), 
+                        bgColor, blurStrength.getValue(), blurOpacity.getValue() * alpha);
+            } else {
+                // Обычный фон без размытия
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(),
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(),
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(),
+                                        (int)(alpha * 255));
+                Render2DEngine.drawRound(context.getMatrices(), x, y, width, height, cornerRadius.getValue(), bgColor);
+            }
+        }
+
+        // Рисуем голову игрока
+        if (target instanceof PlayerEntity) {
+            RenderSystem.setShaderTexture(0, ((AbstractClientPlayerEntity) target).getSkinTextures().texture());
+            
+            context.getMatrices().push();
+            context.getMatrices().translate(x + 3.5f + (height - 6) / 2, y + 3.5f + (height - 6) / 2, 0);
+            context.getMatrices().scale(1f, 1f, 1f);
+            context.getMatrices().translate(-(x + 3.5f + (height - 6) / 2), -(y + 3.5f + (height - 6) / 2), 0);
+            
+            RenderSystem.enableBlend();
+            RenderSystem.colorMask(false, false, false, true);
+            RenderSystem.clearColor(0.0F, 0.0F, 0.0F, 0.0F);
+            RenderSystem.clear(GL40C.GL_COLOR_BUFFER_BIT, false);
+            RenderSystem.colorMask(true, true, true, true);
+            RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+            Render2DEngine.renderRoundedQuadInternal(context.getMatrices().peek().getPositionMatrix(), 
+                    animationFactor, animationFactor, animationFactor, animationFactor, 
+                    x + 3.5f, y + 3.5f, x + 3.5f + (height - 6), y + 3.5f + (height - 6), 7, 10);
+            RenderSystem.blendFunc(GL40C.GL_DST_ALPHA, GL40C.GL_ONE_MINUS_DST_ALPHA);
+            RenderSystem.setShaderColor(animationFactor, animationFactor, animationFactor, animationFactor);
+            Render2DEngine.renderTexture(context.getMatrices(), x + 3.5f, y + 3.5f, height - 6, height - 6, 8, 8, 8, 8, 64, 64);
+            Render2DEngine.renderTexture(context.getMatrices(), x + 3.5f, y + 3.5f, height - 6, height - 6, 40, 8, 8, 8, 64, 64);
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+            RenderSystem.defaultBlendFunc();
+            context.getMatrices().pop();
+        } else {
+            Render2DEngine.drawRound(context.getMatrices(), x + 3, y + 3, height - 6, height - 6, cornerRadius.getValue(),
+                    new Color(22, 22, 22, 120));
+            
+            // Центрируем знак вопроса идеально
+            float questionMarkWidth = FontRenderers.sf_bold.getStringWidth("?");
+            float questionMarkHeight = FontRenderers.sf_bold.getFontHeight("?");
+            float squareSize = height - 6;
+            float centerX = x + 3 + squareSize / 2f - questionMarkWidth / 2f;
+            float centerY = y + 3 + squareSize / 2f - questionMarkHeight / 2f + 2f; // +2 для идеального центрирования
+            
+            FontRenderers.sf_bold.drawString(context.getMatrices(), "?", centerX, centerY, Colors.WHITE);
+        }
+
+        // Получаем имя игрока
+        String name = target instanceof PlayerEntity ? 
+                ((PlayerEntity) target).getGameProfile().getName() : 
+                target.getName().getString();
+
+        // Обрезаем имя если слишком длинное
+        float maxNameWidth = 60 * scale.getValue();
+        float nameWidth = FontRenderers.sf_bold.getStringWidth(name);
+        if (nameWidth > maxNameWidth) {
+            StringBuilder shortened = new StringBuilder();
+            for (char c : name.toCharArray()) {
+                String temp = shortened.toString() + c + "...";
+                if (FontRenderers.sf_bold.getStringWidth(temp) > maxNameWidth) {
+                    break;
+                }
+                shortened.append(c);
+            }
+            name = shortened.toString() + "...";
+        }
+
+        // Рисуем имя игрока
+        String displayName = ModuleManager.media.isEnabled() ? "Protected" : 
+                (ModuleManager.nameProtect.isEnabled() && target == mc.player ? 
+                        NameProtect.getCustomName() : name);
+        
+        FontRenderers.sf_bold.drawString(context.getMatrices(), displayName, 
+                x + height, y + 7, Colors.WHITE);
+
+        // Рисуем полоску здоровья (черная полоска всегда на 100%)
+        float min = 40 * scale.getValue();
+        Render2DEngine.drawRound(context.getMatrices(), x + height - 1, y + height - 9 - 1, min + 2, 6, cornerRadius.getValue(),
+                new Color(22, 22, 22, 120));
+
+        // Рисуем здоровье (зеленая полоска зависит от текущего здоровья)
+        Render2DEngine.drawRound(context.getMatrices(), x + height, y + height - 9, 
+                Math.min(min, min * currentHealth), 4, cornerRadius.getValue(),
+                HudEditor.getColor(1));
+
+        // Рисуем абсорбцию (золотая полоска после здоровья)
+        if (showAbsorption.getValue() && currentAbsorption > 0.01) {
+            float healthWidth = Math.min(min, min * currentHealth);
+            float absorptionWidth = Math.min(min, min * currentAbsorption);
+            
+            // Абсорбция рисуется после здоровья, но не выходит за границы
+            float absorptionX = x + height + healthWidth;
+            float maxAbsorptionWidth = min - healthWidth;
+            float finalAbsorptionWidth = Math.min(absorptionWidth, maxAbsorptionWidth);
+            
+            if (finalAbsorptionWidth > 0) {
+                Render2DEngine.drawRound(context.getMatrices(), absorptionX, y + height - 9, 
+                        finalAbsorptionWidth, 4, cornerRadius.getValue(),
+                        new Color(255, 215, 0));
+            }
+        }
+
+        // Рисуем процент здоровья
+        if (showHealthPercent.getValue()) {
+            String healthText = (int) Math.round(currentHealth * 100) + "%";
+            FontRenderers.sf_bold_mini.drawString(context.getMatrices(), healthText,
+                    x + height + Math.min(min, min * currentHealth) + 2, y + height - 9, -1);
+        }
+
+        context.getMatrices().pop();
+        setBounds(x, y, width, height);
+    }
+
     public enum HPmodeEn {
         HP, Percentage
     }
@@ -587,6 +776,6 @@ public class TargetHud extends HudElement {
     }
 
     public enum ModeEn {
-        ThunderHack, NurikZapen, CelkaPasta
+        ThunderHack, NurikZapen, CelkaPasta, New
     }
 }

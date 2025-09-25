@@ -16,7 +16,6 @@ import thunder.hack.setting.impl.Bind;
 import java.util.Objects;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
-import static thunder.hack.features.hud.impl.KeyBinds.getShortKeyName;
 import static thunder.hack.features.modules.client.ClientSettings.isRu;
 
 public class BindCommand extends Command {
@@ -81,5 +80,40 @@ public class BindCommand extends Command {
             sendMessage("Done!");
             return SINGLE_SUCCESS;
         }));
+    }
+    
+    // Метод для получения короткого имени клавиши
+    public static String getShortKeyName(Module module) {
+        String bind = module.getBind().getBind();
+        if (bind == null || bind.equals("None")) {
+            return "None";
+        }
+        
+        // Упрощаем названия клавиш
+        return bind.replace("key.keyboard.", "")
+                  .replace("key.mouse.", "M")
+                  .replace("left.", "L")
+                  .replace("right.", "R")
+                  .replace("control", "Ctrl")
+                  .replace("shift", "Shift")
+                  .replace("alt", "Alt")
+                  .replace("space", "Space")
+                  .replace("enter", "Enter")
+                  .replace("backspace", "Back")
+                  .replace("tab", "Tab")
+                  .replace("escape", "Esc")
+                  .replace("f1", "F1")
+                  .replace("f2", "F2")
+                  .replace("f3", "F3")
+                  .replace("f4", "F4")
+                  .replace("f5", "F5")
+                  .replace("f6", "F6")
+                  .replace("f7", "F7")
+                  .replace("f8", "F8")
+                  .replace("f9", "F9")
+                  .replace("f10", "F10")
+                  .replace("f11", "F11")
+                  .replace("f12", "F12")
+                  .toUpperCase();
     }
 }

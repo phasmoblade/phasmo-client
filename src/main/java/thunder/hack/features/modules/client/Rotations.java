@@ -17,10 +17,10 @@ public class Rotations extends Module {
         super("Rotations", Category.CLIENT);
     }
 
-    private final Setting<MoveFix> moveFix = new Setting<>("MoveFix", MoveFix.Off);
+    public final Setting<MoveFix> moveFix = new Setting<>("MoveFix", MoveFix.Off);
     public final Setting<Boolean> clientLook = new Setting<>("ClientLook", false);
 
-    private enum MoveFix {
+    public enum MoveFix {
         Off, Focused, Free
     }
 

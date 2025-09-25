@@ -15,13 +15,14 @@ import thunder.hack.utility.render.Render2DEngine;
 import thunder.hack.utility.render.Render3DEngine;
 
 import java.awt.*;
+import thunder.hack.utility.hud.HudFontHelper;
+import thunder.hack.setting.Setting;
 
 public class TotemCounter extends HudElement {
     public TotemCounter() {
         super("TotemCounter", 0, 0);
     }
-
-    private float angle, prevAngle;
+private float angle, prevAngle;
 
     public void onRender2D(DrawContext context) {
         if (getItemCount(Items.TOTEM_OF_UNDYING) == 0)

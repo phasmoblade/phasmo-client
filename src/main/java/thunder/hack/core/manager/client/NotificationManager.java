@@ -6,7 +6,7 @@ import net.minecraft.util.Formatting;
 import thunder.hack.core.manager.IManager;
 import thunder.hack.features.cmd.Command;
 import thunder.hack.gui.notification.Notification;
-import thunder.hack.features.modules.client.Notifications;
+import thunder.hack.features.hud.impl.Notifications;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.awt.*;

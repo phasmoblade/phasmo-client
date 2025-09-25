@@ -15,12 +15,24 @@ import thunder.hack.utility.render.Render2DEngine;
 import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.Collections;
+import thunder.hack.utility.hud.HudFontHelper;
+import thunder.hack.setting.Setting;
+import thunder.hack.setting.impl.BooleanSettingGroup;
 
 public class AutoCrystalInfo extends HudElement {
     public AutoCrystalInfo() {
         super("AutoCrystalInfo", 175, 80);
     }
-
+    
+    // Настройки шрифта и фона
+    private final Setting<BooleanSettingGroup> backgroundSettings = new Setting<>("Background", new BooleanSettingGroup(true));
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100).addToGroup(backgroundSettings);
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true).addToGroup(backgroundSettings);
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 3f, 0f, 10f);
+    private final Setting<HudFontHelper.FontStyle> fontStyle = new Setting<>("FontStyle", HudFontHelper.FontStyle.MODULES_RENDERER);
+    
     private final ArrayDeque<Integer> speeds = new ArrayDeque<>(20);
     private int max, min;
     private long time;
@@ -28,7 +40,29 @@ public class AutoCrystalInfo extends HudElement {
     public void onRender2D(DrawContext context) {
         super.onRender2D(context);
 
-        Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), getWidth(), getHeight(), HudEditor.hudRound.getValue());
+        // Рендеринг фона с системой закругления как в SessionInfo
+        if (backgroundSettings.getValue().isEnabled()) {
+            float alpha = backgroundTransparency.getValue() / 100f;
+            float cornerRadiusValue = this.cornerRadius.getValue();
+            
+            if (enableBlur.getValue()) {
+                // Используем красивое размытие с учетом прозрачности
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(),
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(),
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(),
+                                        (int)(alpha * 255));
+                // Применяем прозрачность к blurOpacity
+                float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), getWidth(), getHeight(), cornerRadiusValue, bgColor, blurStrength.getValue(), finalBlurOpacity);
+            } else {
+                // Обычный фон без размытия
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(),
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(),
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(),
+                                        (int)(alpha * 255));
+                Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), getWidth(), getHeight(), cornerRadiusValue, alpha, bgColor, bgColor, bgColor, bgColor);
+            }
+        }
 
         Color c1 = HudEditor.getColor(0).darker().darker().darker();
         Color c2 = HudEditor.getColor(0);

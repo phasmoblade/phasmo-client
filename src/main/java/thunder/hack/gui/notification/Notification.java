@@ -8,6 +8,8 @@ import thunder.hack.utility.Timer;
 import thunder.hack.utility.math.MathUtility;
 import thunder.hack.utility.render.Render2DEngine;
 import thunder.hack.utility.render.animation.EaseOutBack;
+import thunder.hack.utility.hud.HudFontHelper;
+import thunder.hack.core.manager.client.ModuleManager;
 
 import java.awt.*;
 
@@ -36,7 +38,11 @@ public class Notification {
             default -> icon = "H";
         }
 
-        width = isDefault() ? FontRenderers.sf_bold_mini.getStringWidth(message) + 38f : FontRenderers.sf_bold_micro.getStringWidth(title + " " + message) + 20f;
+        // Рассчитываем ширину с учетом выбранного шрифта
+        HudFontHelper.FontStyle fontStyle = ModuleManager.notifications.fontStyle.getValue();
+        width = isDefault() ? 
+            HudFontHelper.getStringWidth(message, fontStyle) + 38f : 
+            HudFontHelper.getStringWidth(title + " " + message, fontStyle) + 20f;
         height = isDefault() ? 25 : 13;
 
         animation = new EaseOutBack(isDefault() ? 10 : 20);
@@ -65,8 +71,10 @@ public class Notification {
                 Render2DEngine.drawRect(matrix, x + 25, y + 2, 0.5f, 20, Render2DEngine.injectAlpha(new Color(0x44FFFFFF, true), (int) (animatedAlpha * 0.1f)));
             }
 
-            FontRenderers.sf_bold_mini.drawString(matrix, title, x + 30, y + 6, HudEditor.textColor.getValue().getColor());
-            FontRenderers.sf_bold_mini.drawString(matrix, message, x + 30, y + 15, color.getRGB());
+            // Используем настраиваемый шрифт для текста
+            HudFontHelper.FontStyle fontStyle = ModuleManager.notifications.fontStyle.getValue();
+            drawStringWithStyle(matrix, title, x + 30, y + 6, HudEditor.textColor.getValue().getColor(), fontStyle);
+            drawStringWithStyle(matrix, message, x + 30, y + 15, color.getRGB(), fontStyle);
             FontRenderers.mid_icons.drawString(matrix, icon, x + 5, y + 7, color.getRGB());
         } else {
             direction = isFinished();
@@ -79,7 +87,9 @@ public class Notification {
             } else {
                 Render2DEngine.drawRect(matrix, x + 13, y + 1, 0.5f, 10, Render2DEngine.injectAlpha(new Color(0x44FFFFFF, true), (int) (animatedAlpha * 0.1f)));
             }
-            FontRenderers.sf_bold_micro.drawString(matrix, title + " " + message, x + 16, y + 5, color.getRGB());
+            // Используем настраиваемый шрифт для текста
+            HudFontHelper.FontStyle fontStyle = ModuleManager.notifications.fontStyle.getValue();
+            drawStringWithStyle(matrix, title + " " + message, x + 16, y + 5, color.getRGB(), fontStyle);
             FontRenderers.icons.drawString(matrix, icon, x + 3, y + 5.5f, color.getRGB());
         }
     }
@@ -92,12 +102,31 @@ public class Notification {
         direction = isFinished();
         animationX = (float) (width * animation.getAnimationd());
         y = animate(y, getY);
-        if (HudEditor.hudStyle.is(HudEditor.HudStyle.Blurry)) {
-            Render2DEngine.drawHudBase2(matrix, isDefault() ? mc.getWindow().getScaledWidth() - 6 - width + animationX : mc.getWindow().getScaledWidth() / 2f - width / 2f,
-                    y, width, height, isDefault() ? 5f : 3f, HudEditor.blurStrength.getValue(), HudEditor.blurOpacity.getValue(), (float) MathUtility.clamp((1 - animation.getAnimationd()), 0f, 1f));
+        
+        // Используем настройки из модуля Notifications
+        boolean showBackground = ModuleManager.notifications.backgroundSettings.getValue().isEnabled();
+        if (!showBackground) return;
+        
+        float x = isDefault() ? mc.getWindow().getScaledWidth() - 6 - width + animationX : mc.getWindow().getScaledWidth() / 2f - width / 2f;
+        float alpha = (float) MathUtility.clamp((1 - animation.getAnimationd()), 0f, 1f);
+        float cornerRadius = isDefault() ? 5f : 3f;
+        
+        if (ModuleManager.notifications.enableBlur.getValue()) {
+            // Используем настраиваемые параметры размытия
+            float blurStrength = ModuleManager.notifications.blurStrength.getValue();
+            float blurOpacity = ModuleManager.notifications.blurOpacity.getValue() * alpha;
+            float backgroundAlpha = ModuleManager.notifications.backgroundTransparency.getValue() / 100f * alpha;
+            
+            Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(),
+                                    HudEditor.blurColor.getValue().getColorObject().getGreen(),
+                                    HudEditor.blurColor.getValue().getColorObject().getBlue(),
+                                    (int)(backgroundAlpha * 255));
+            
+            Render2DEngine.drawHudBase2(matrix, x, y, width, height, cornerRadius, blurStrength, blurOpacity, alpha);
         } else {
-            Render2DEngine.drawHudBase(matrix, isDefault() ? mc.getWindow().getScaledWidth() - 6 - width + animationX : mc.getWindow().getScaledWidth() / 2f - width / 2f,
-                    y, width, height, isDefault() ? 5f : 3f, (float) MathUtility.clamp((1 - animation.getAnimationd()), 0f, 1f));
+            // Обычный фон без размытия
+            float backgroundAlpha = ModuleManager.notifications.backgroundTransparency.getValue() / 100f * alpha;
+            Render2DEngine.drawHudBase(matrix, x, y, width, height, cornerRadius, backgroundAlpha);
         }
     }
 
@@ -115,6 +144,23 @@ public class Notification {
 
     public float animate(float value, float target) {
         return value + (target - value) / 8f;
+    }
+    
+    // Вспомогательный метод для рендеринга текста с выбранным шрифтом
+    private void drawStringWithStyle(MatrixStack matrix, String text, float x, float y, int color, HudFontHelper.FontStyle fontStyle) {
+        switch (fontStyle) {
+            case SF_BOLD -> FontRenderers.sf_bold.drawString(matrix, text, x, y, color);
+            case SF_MEDIUM -> FontRenderers.sf_medium.drawString(matrix, text, x, y, color);
+            case MONSTERRAT -> FontRenderers.monsterrat.drawString(matrix, text, x, y, color);
+            case PROFONT -> FontRenderers.profont.drawString(matrix, text, x, y, color);
+            case COMFORTAA -> FontRenderers.settings.drawString(matrix, text, x, y, color);
+            case ICONS -> FontRenderers.icons.drawString(matrix, text, x, y, color);
+            case ZONA_ULTRA -> FontRenderers.zona_ultra.drawString(matrix, text, x, y, color);
+            case SF_MEDIUM_MINI -> FontRenderers.sf_medium_mini.drawString(matrix, text, x, y, color);
+            case SF_BOLD_MINI -> FontRenderers.sf_bold_mini.drawString(matrix, text, x, y, color);
+            case SF_BOLD_MICRO -> FontRenderers.sf_bold_micro.drawString(matrix, text, x, y, color);
+            case MODULES_RENDERER -> FontRenderers.modules.drawString(matrix, text, x, y, color);
+        }
     }
 
     public enum Type {

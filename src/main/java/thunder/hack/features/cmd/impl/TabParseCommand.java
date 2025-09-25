@@ -46,23 +46,22 @@ public class TabParseCommand extends Command {
 
             try {
                 file.createNewFile();
-                OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
-                writer.write("========================\n\n");
-                writer.write("Server: " + mc.getNetworkHandler().getServerInfo().address + "\n");
-                writer.write("Date: " + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + "\n\n");
-                writer.write("========================\n\n");
+                try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+                    writer.write("========================\n\n");
+                    writer.write("Server: " + mc.getNetworkHandler().getServerInfo().address + "\n");
+                    writer.write("Date: " + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + "\n\n");
+                    writer.write("========================\n\n");
 
-                List<PlayerListEntry> sortedPlayers = new ArrayList<>(mc.getNetworkHandler().getPlayerList());
-                sortedPlayers.sort((player1, player2) -> {
-                    String prefix1 = player1.getScoreboardTeam().getPrefix().getString();
-                    String prefix2 = player2.getScoreboardTeam().getPrefix().getString();
-                    return prefix2.compareTo(prefix1);
-                });
+                    List<PlayerListEntry> sortedPlayers = new ArrayList<>(mc.getNetworkHandler().getPlayerList());
+                    sortedPlayers.sort((player1, player2) -> {
+                        String prefix1 = player1.getScoreboardTeam().getPrefix().getString();
+                        String prefix2 = player2.getScoreboardTeam().getPrefix().getString();
+                        return prefix2.compareTo(prefix1);
+                    });
 
-                for (PlayerListEntry entry : sortedPlayers)
-                    writer.write(Team.decorateName(entry.getScoreboardTeam(), Text.literal(entry.getProfile().getName())).getString() + "\n");
-
-                writer.close();
+                    for (PlayerListEntry entry : sortedPlayers)
+                        writer.write(Team.decorateName(entry.getScoreboardTeam(), Text.literal(entry.getProfile().getName())).getString() + "\n");
+                }
                 sendMessage(isRu() ? Formatting.GREEN + "Таб успешно сохранен в " + file.getPath() : Formatting.GREEN + "Tab was successfully saved in " + file.getPath());
             } catch (IOException e) {
                 e.printStackTrace();

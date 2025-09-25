@@ -27,6 +27,10 @@ public class Newlocity extends Module {
     private boolean isFrozen;
     private int duelCounter = 0;
     private long lastDuelTime = 0;
+    private int hitStreak = 0;
+    private long lastHitTime = 0;
+    private boolean smartFreeze = true;
+    private int freezeTicks = 0;
 
     public Newlocity() {
         super("GrimVelocity", Module.Category.MOVEMENT);
@@ -71,8 +75,10 @@ public class Newlocity extends Module {
         if (fullNullCheck()) return;
         if (shouldPause()) return;
 
+        // Сброс счетчиков каждые 10 секунд
         if (System.currentTimeMillis() - lastDuelTime > 10000) {
             duelCounter = 0;
+            hitStreak = 0;
         }
         lastDuelTime = System.currentTimeMillis();
 
@@ -87,8 +93,10 @@ public class Newlocity extends Module {
             handleExplosionPacket(e, explosion);
         }
 
+        // Улучшенная логика GrimFreeze
         if (mode.getValue() == Mode.GrimFreeze && isFrozen && e.getPacket() instanceof net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket) {
-            if (duelCounter < 2 || random.nextFloat() > 0.1f) {
+            // Умная логика - не всегда отменяем пакеты
+            if (shouldCancelPositionPacket()) {
                 e.cancel();
             }
         }
@@ -113,9 +121,23 @@ public class Newlocity extends Module {
                             (int) (pac.getVelocityZ() * variationZ));
                 }
                 case GrimFreeze -> {
-                    if (duelCounter < 2 || random.nextFloat() > 0.15f) {
+                    // Улучшенная логика для избежания флагов на 12 ударе
+                    hitStreak++;
+                    lastHitTime = System.currentTimeMillis();
+                    
+                    // Адаптивная логика в зависимости от серии ударов
+                    boolean shouldFreeze = shouldApplyGrimFreeze();
+                    
+                    if (shouldFreeze) {
                         e.cancel();
-                        startFreeze();
+                        startSmartFreeze();
+                    } else {
+                        // Иногда не отменяем velocity для избежания детекции
+                        float reductionFactor = 0.1f + random.nextFloat() * 0.3f; // 10-40% от оригинального velocity
+                        setVelocityMotion(pac,
+                                (int) (pac.getVelocityX() * reductionFactor),
+                                (int) (pac.getVelocityY() * reductionFactor),
+                                (int) (pac.getVelocityZ() * reductionFactor));
                     }
                 }
             }
@@ -146,14 +168,77 @@ public class Newlocity extends Module {
         isFrozen = true;
         freezeStartTime = System.currentTimeMillis() - random.nextInt(500);
     }
+    
+    private void startSmartFreeze() {
+        isFrozen = true;
+        freezeStartTime = System.currentTimeMillis();
+        freezeTicks = 3 + random.nextInt(5); // 3-7 тиков заморозки
+    }
+    
+    // Умная логика для определения, нужно ли применять GrimFreeze
+    private boolean shouldApplyGrimFreeze() {
+        // Если серия ударов меньше 3, всегда применяем
+        if (hitStreak < 3) {
+            return true;
+        }
+        
+        // Если серия ударов 3-8, применяем с высокой вероятностью
+        if (hitStreak <= 8) {
+            return random.nextFloat() > 0.1f; // 90% шанс
+        }
+        
+        // Если серия ударов 9-11, применяем с меньшей вероятностью
+        if (hitStreak <= 11) {
+            return random.nextFloat() > 0.3f; // 70% шанс
+        }
+        
+        // Если серия ударов 12+, применяем редко для избежания детекции
+        if (hitStreak <= 15) {
+            return random.nextFloat() > 0.6f; // 40% шанс
+        }
+        
+        // Если серия очень длинная, применяем очень редко
+        return random.nextFloat() > 0.8f; // 20% шанс
+    }
+    
+    // Умная логика для отмены позиционных пакетов
+    private boolean shouldCancelPositionPacket() {
+        // Не отменяем первые 2 пакета
+        if (duelCounter < 2) {
+            return true;
+        }
+        
+        // Адаптивная логика в зависимости от серии ударов
+        if (hitStreak < 5) {
+            return random.nextFloat() > 0.05f; // 95% шанс отмены
+        } else if (hitStreak < 10) {
+            return random.nextFloat() > 0.15f; // 85% шанс отмены
+        } else if (hitStreak < 15) {
+            return random.nextFloat() > 0.3f; // 70% шанс отмены
+        } else {
+            return random.nextFloat() > 0.5f; // 50% шанс отмены
+        }
+    }
 
     @Override
     public void onUpdate() {
         if (shouldPause()) return;
 
         if (mode.getValue() == Mode.GrimFreeze) {
-            if (isFrozen && System.currentTimeMillis() - freezeStartTime >= (300 + random.nextInt(500))) {
-                isFrozen = false;
+            // Умная заморозка с тиками
+            if (isFrozen) {
+                if (freezeTicks > 0) {
+                    freezeTicks--;
+                    // Принудительно обнуляем velocity во время заморозки
+                    mc.player.setVelocity(0, 0, 0);
+                } else {
+                    isFrozen = false;
+                }
+            }
+            
+            // Сброс серии ударов если прошло много времени
+            if (System.currentTimeMillis() - lastHitTime > 3000) {
+                hitStreak = Math.max(0, hitStreak - 1);
             }
         }
     }
@@ -162,8 +247,9 @@ public class Newlocity extends Module {
     public void onPlayerUpdate(PlayerUpdateEvent e) {
         if (mode.getValue() == Mode.GrimFreeze && ModuleManager.aura.isEnabled()) {
             if (Aura.target != null && mc.player.hurtTime > 0) {
-                if (duelCounter < 2 || random.nextFloat() > 0.25f) {
-                    startFreeze();
+                // Умная логика заморозки в зависимости от серии ударов
+                if (shouldApplyGrimFreeze()) {
+                    startSmartFreeze();
                 }
             }
         }

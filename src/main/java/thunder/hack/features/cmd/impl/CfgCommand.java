@@ -47,7 +47,7 @@ public class CfgCommand extends Command {
 
         builder.then(literal("dir").executes(context -> {
             try {
-                net.minecraft.util.Util.getOperatingSystem().open(new File("ThunderHackRecode/configs/").toURI());
+                net.minecraft.util.Util.getOperatingSystem().open(Managers.CONFIG.CONFIGS_FOLDER.toURI());
             } catch (Exception e) {
                 e.printStackTrace();
             }

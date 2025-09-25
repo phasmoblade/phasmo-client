@@ -17,6 +17,8 @@ import thunder.hack.features.modules.combat.AutoCrystal;
 import thunder.hack.setting.Setting;
 import thunder.hack.utility.render.Render2DEngine;
 import thunder.hack.utility.render.animation.AnimationUtility;
+import thunder.hack.utility.hud.HudFontHelper;
+import thunder.hack.setting.impl.BooleanSettingGroup;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -29,6 +31,15 @@ public class KillFeed extends HudElement {
     }
 
     private Setting<Boolean> resetOnDeath = new Setting<>("ResetOnDeath", true);
+    
+    // Настройки шрифта и фона
+    private final Setting<BooleanSettingGroup> backgroundSettings = new Setting<>("Background", new BooleanSettingGroup(true));
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100).addToGroup(backgroundSettings);
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true).addToGroup(backgroundSettings);
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 3f, 0f, 10f, v -> backgroundSettings.getValue().isEnabled()).addToGroup(backgroundSettings);
+    private final Setting<HudFontHelper.FontStyle> fontStyle = new Setting<>("FontStyle", HudFontHelper.FontStyle.MODULES_RENDERER);
 
     private final List<KillComponent> players = new ArrayList<>();
 
@@ -48,14 +59,41 @@ public class KillFeed extends HudElement {
         vAnimation = AnimationUtility.fast(vAnimation, 14 + y_offset1, 15);
         hAnimation = AnimationUtility.fast(hAnimation, scale_x + 10, 15);
 
-        Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, HudEditor.hudRound.getValue());
+        // Рендеринг фона с новыми настройками
+        if (backgroundSettings.getValue().isEnabled()) {
+            float alpha = backgroundTransparency.getValue() / 100f;
+            float cornerRadiusValue = this.cornerRadius.getValue();
+            
+            if (enableBlur.getValue()) {
+                // Используем красивое размытие с учетом прозрачности
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                        (int)(alpha * 255));
+                // Применяем прозрачность к blurOpacity
+                float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, cornerRadiusValue, bgColor, blurStrength.getValue(), finalBlurOpacity);
+            } else {
+                // Обычный фон без размытия
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                        (int)(alpha * 255));
+                Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, cornerRadiusValue, alpha, bgColor, bgColor, bgColor, bgColor);
+            }
+        } else {
+            // Используем старую систему HudBase
+            Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, HudEditor.hudRound.getValue());
+        }
 
+        // Заголовок
         if (HudEditor.hudStyle.is(HudEditor.HudStyle.Glowing)) {
             FontRenderers.sf_bold.drawCenteredString(context.getMatrices(), "KillFeed", getPosX() + hAnimation / 2, getPosY() + 4, HudEditor.textColor.getValue().getColorObject());
         } else {
             FontRenderers.sf_bold.drawGradientCenteredString(context.getMatrices(), "KillFeed", getPosX() + hAnimation / 2, getPosY() + 4, 10);
         }
 
+        // Разделитель
         if (y_offset1 > 0) {
             if (HudEditor.hudStyle.is(HudEditor.HudStyle.Glowing)) {
                 Render2DEngine.horizontalGradient(context.getMatrices(), getPosX() + 2, getPosY() + 13.7f, getPosX() + 2 + hAnimation / 2f - 2, getPosY() + 14, Render2DEngine.injectAlpha(HudEditor.textColor.getValue().getColorObject(), 0), HudEditor.textColor.getValue().getColorObject());
@@ -68,7 +106,8 @@ public class KillFeed extends HudElement {
         Render2DEngine.addWindow(context.getMatrices(), getPosX(), getPosY(), getPosX() + hAnimation, getPosY() + vAnimation, 1f);
         int y_offset = 3;
         for (KillComponent kc : Lists.newArrayList(players)) {
-            FontRenderers.modules.drawString(context.getMatrices(), kc.getString(), getPosX() + 5, getPosY() + 18 + y_offset, -1);
+            // Рендеринг текста с выбранным шрифтом
+            HudFontHelper.drawString(context, kc.getString(), getPosX() + 5, getPosY() + 18 + y_offset, -1, fontStyle.getValue());
             y_offset += 10;
         }
         Render2DEngine.popWindow();

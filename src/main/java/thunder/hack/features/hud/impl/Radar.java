@@ -26,6 +26,14 @@ public class Radar extends HudElement {
     private final Setting<Integer> size = new Setting<>("Size", 80, 20, 300);
     private final Setting<ColorSetting> color2 = new Setting<>("Color", new ColorSetting(0xFF101010));
     private final Setting<ColorSetting> color3 = new Setting<>("PlayerColor", new ColorSetting(0xC59B9B9B));
+    
+    // Настройки фона
+    private final Setting<Boolean> showBackground = new Setting<>("ShowBackground", true);
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100, v -> showBackground.getValue());
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true, v -> showBackground.getValue());
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f, v -> showBackground.getValue() && enableBlur.getValue());
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f, v -> showBackground.getValue() && enableBlur.getValue());
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 3f, 0f, 10f, v -> showBackground.getValue());
 
     private final Setting<Component> c1 = new Setting<>("Component1", Component.Name, v -> mode.is(Mode.Text));
     private final Setting<Component> c2 = new Setting<>("Component2", Component.Hp, v -> mode.is(Mode.Text));
@@ -42,7 +50,31 @@ public class Radar extends HudElement {
         super.onRender2D(context);
 
         if (mode.getValue() == Mode.Rect) {
-            Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), size.getValue(), size.getValue(), HudEditor.hudRound.getValue());
+            if (showBackground.getValue()) {
+                float alpha = backgroundTransparency.getValue() / 100f;
+                float cornerRadiusValue = this.cornerRadius.getValue();
+                
+                if (enableBlur.getValue()) {
+                    // Используем красивое размытие с учетом прозрачности
+                    Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                            (int)(alpha * 255));
+                    // Применяем прозрачность к blurOpacity
+                    float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                    Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), size.getValue(), size.getValue(), cornerRadiusValue, bgColor, blurStrength.getValue(), finalBlurOpacity);
+                } else {
+                    // Обычный фон без размытия
+                    Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                            (int)(alpha * 255));
+                    Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), size.getValue(), size.getValue(), cornerRadiusValue, alpha, bgColor, bgColor, bgColor, bgColor);
+                }
+            } else {
+                // Если фон отключен, используем старый метод для совместимости
+                Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), size.getValue(), size.getValue(), HudEditor.hudRound.getValue());
+            }
 
             if (HudEditor.hudStyle.is(HudEditor.HudStyle.Blurry)) {
                 Render2DEngine.drawRectDumbWay(context.getMatrices(), getPosX(), getPosY() + (size.getValue() / 2F + 0.25f), getPosX() + size.getValue(), getPosY() + (size.getValue() / 2F) - 0.25f, new Color(0x54FFFFFF, true));

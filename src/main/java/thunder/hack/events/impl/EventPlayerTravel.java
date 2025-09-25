@@ -16,6 +16,10 @@ public class EventPlayerTravel extends Event {
         return mVec;
     }
 
+    public void setmVec(Vec3d mVec) {
+        this.mVec = mVec;
+    }
+
     public boolean isPre() {
         return pre;
     }

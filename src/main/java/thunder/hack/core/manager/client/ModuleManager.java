@@ -58,7 +58,7 @@ public class ModuleManager implements IManager {
     public static TotemAnimation totemAnimation = new TotemAnimation();
     public static PortalGodMode portalGodMode = new PortalGodMode();
     public static OptifineCapes optifineCapes = new OptifineCapes();
-    public static Notifications notifications = new Notifications();
+    public static thunder.hack.features.hud.impl.Notifications notifications = new thunder.hack.features.hud.impl.Notifications();
     public static NoEntityTrace noEntityTrace = new NoEntityTrace();
     public static MessageAppend messageAppend = new MessageAppend();
     public static EntityControl entityControl = new EntityControl();
@@ -85,6 +85,7 @@ public class ModuleManager implements IManager {
     public static TotemCounter totemCounter = new TotemCounter();
     public static PerfectDelay perfectDelay = new PerfectDelay();
     public static ServerHelper serverHelper = new ServerHelper();
+    public static SessionInfo sessionInfo = new SessionInfo();
     public static ChestCounter chestCounter = new ChestCounter();
     public static StashLogger stashLogger = new StashLogger();
     public static FastLatency fastLatency = new FastLatency();
@@ -268,12 +269,18 @@ public class ModuleManager implements IManager {
     public static AutoSwap autoSwap = new AutoSwap();
     public static FastTrident fastTrident = new FastTrident();
     public static AutoTotemNew autoTotemNew = new AutoTotemNew();
-    public static Newlocity newlocity = new Newlocity();
+    public static GrimVelocity grimVelocity = new GrimVelocity();
     public static GrimSpeed grimSpeed = new GrimSpeed();
     public static TestFunction testfunction = new TestFunction();
     public static NoSlowNew noSlowNew = new NoSlowNew();
     public static GrimGlide grimGlide = new GrimGlide();
     public static AuraAI auraAI = new AuraAI();
+    public static Disabler disabler = new Disabler();
+    public static Stopper stopper = new Stopper();
+    public static AutoJoiner autoJoiner = new AutoJoiner();
+    public static RegionSpider regionSpider = new RegionSpider();
+    public static AresMineHelper aresMineHelper = new AresMineHelper();
+    public static AutoOil autoOil = new AutoOil();
 
 
     public ModuleManager() {

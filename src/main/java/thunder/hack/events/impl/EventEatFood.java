@@ -6,7 +6,7 @@ import thunder.hack.events.Event;
 public class EventEatFood extends Event {
     private final ItemStack stack;
 
-    public EventEatFood(ItemStack stack){
+    public EventEatFood(ItemStack stack) {
         this.stack = stack;
     }
 

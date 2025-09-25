@@ -69,7 +69,7 @@ public class ACDetector extends Module {
     private long lastPPLPacketTime = 0;
 
     public ACDetector() {
-        super("AntiCheatDetector", Category.MISC);
+        super("AntiCheatFlags", Category.MISC);
     }
 
     @EventHandler

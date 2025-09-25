@@ -12,11 +12,19 @@ import thunder.hack.setting.Setting;
 import thunder.hack.utility.render.Render2DEngine;
 
 import java.awt.*;
+import thunder.hack.utility.hud.HudFontHelper;
 
 public class Hotbar extends HudElement {
     public Hotbar() {
         super("Hotbar", 0, 0);
     }
+    // Настройки фона
+    private final Setting<Boolean> showBackground = new Setting<>("ShowBackground", true);
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100);
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true);
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f);
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f);
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 0f, 0f, 8f);
 
     public static final Setting<Mode> lmode = new Setting<>("LeftHandMode", Mode.Merged);
 
@@ -34,9 +42,37 @@ public class Hotbar extends HudElement {
             int i = mc.getWindow().getScaledWidth() / 2;
 
             if (mc.player.getOffHandStack().isEmpty()) {
-                Render2DEngine.drawHudBase(matrices, i - 90, mc.getWindow().getScaledHeight() - 25, 180, 20, HudEditor.hudRound.getValue());
+                // Рисуем фон для основного хотбара
+                if (showBackground.getValue()) {
+                    float alpha = backgroundTransparency.getValue() / 100f;
+                    Color bgColor = HudEditor.blurColor.getValue().getColorObject();
+                    bgColor = new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), (int) (alpha * 255));
+                    
+                    if (enableBlur.getValue()) {
+                        float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                        Render2DEngine.drawRoundedBlur(matrices, i - 90, mc.getWindow().getScaledHeight() - 25, 180, 20, 
+                            cornerRadius.getValue(), bgColor, blurStrength.getValue(), finalBlurOpacity);
+                    } else {
+                        Render2DEngine.drawRect(matrices, i - 90, mc.getWindow().getScaledHeight() - 25, 180, 20, 
+                            cornerRadius.getValue(), alpha, bgColor, bgColor, bgColor, bgColor);
+                    }
+                }
             } else if (lmode.getValue() == Mode.Merged) {
-                Render2DEngine.drawHudBase(matrices, i - 111, mc.getWindow().getScaledHeight() - 25, 201, 20, HudEditor.hudRound.getValue());
+                // Рисуем фон для объединенного хотбара
+                if (showBackground.getValue()) {
+                    float alpha = backgroundTransparency.getValue() / 100f;
+                    Color bgColor = HudEditor.blurColor.getValue().getColorObject();
+                    bgColor = new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), (int) (alpha * 255));
+                    
+                    if (enableBlur.getValue()) {
+                        float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                        Render2DEngine.drawRoundedBlur(matrices, i - 111, mc.getWindow().getScaledHeight() - 25, 201, 20, 
+                            cornerRadius.getValue(), bgColor, blurStrength.getValue(), finalBlurOpacity);
+                    } else {
+                        Render2DEngine.drawRect(matrices, i - 111, mc.getWindow().getScaledHeight() - 25, 201, 20, 
+                            cornerRadius.getValue(), alpha, bgColor, bgColor, bgColor, bgColor);
+                    }
+                }
 
                 if (HudEditor.hudStyle.is(HudEditor.HudStyle.Blurry)) {
                     Render2DEngine.drawRect(context.getMatrices(), i - 109 + 18, mc.getWindow().getScaledHeight() - 23, 0.5f, 15, new Color(0x44FFFFFF, true));
@@ -45,8 +81,25 @@ public class Hotbar extends HudElement {
                     Render2DEngine.verticalGradient(matrices, i - 109 + 18, mc.getWindow().getScaledHeight() - 11 - 4, i - 108 + 18 - 0.5f, mc.getWindow().getScaledHeight() - 5, HudEditor.textColor.getValue().getColorObject(), Render2DEngine.injectAlpha(HudEditor.textColor.getValue().getColorObject(), 0));
                 }
             } else {
-                Render2DEngine.drawHudBase(matrices, i - 90, mc.getWindow().getScaledHeight() - 25, 180, 20, HudEditor.hudRound.getValue());
-                Render2DEngine.drawHudBase(matrices, i - 112.5f, mc.getWindow().getScaledHeight() - 25, 20, 20, HudEditor.hudRound.getValue());
+                // Рисуем фон для раздельного хотбара
+                if (showBackground.getValue()) {
+                    float alpha = backgroundTransparency.getValue() / 100f;
+                    Color bgColor = HudEditor.blurColor.getValue().getColorObject();
+                    bgColor = new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), (int) (alpha * 255));
+                    
+                    if (enableBlur.getValue()) {
+                        float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                        Render2DEngine.drawRoundedBlur(matrices, i - 90, mc.getWindow().getScaledHeight() - 25, 180, 20, 
+                            cornerRadius.getValue(), bgColor, blurStrength.getValue(), finalBlurOpacity);
+                        Render2DEngine.drawRoundedBlur(matrices, i - 112.5f, mc.getWindow().getScaledHeight() - 25, 20, 20, 
+                            cornerRadius.getValue(), bgColor, blurStrength.getValue(), finalBlurOpacity);
+                    } else {
+                        Render2DEngine.drawRect(matrices, i - 90, mc.getWindow().getScaledHeight() - 25, 180, 20, 
+                            cornerRadius.getValue(), alpha, bgColor, bgColor, bgColor, bgColor);
+                        Render2DEngine.drawRect(matrices, i - 112.5f, mc.getWindow().getScaledHeight() - 25, 20, 20, 
+                            cornerRadius.getValue(), alpha, bgColor, bgColor, bgColor, bgColor);
+                    }
+                }
             }
 
             Color c = HudEditor.hudStyle.is(HudEditor.HudStyle.Blurry) ? new Color(0x7C151515, true) : new Color(0x7C2F2F2F, true);

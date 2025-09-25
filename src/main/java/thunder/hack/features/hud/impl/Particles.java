@@ -8,6 +8,7 @@ import thunder.hack.utility.render.Render2DEngine;
 import thunder.hack.utility.render.TextureStorage;
 
 import java.awt.*;
+import thunder.hack.utility.hud.HudFontHelper;
 
 public class Particles {
     public double x, y, deltaX, deltaY, size, opacity;

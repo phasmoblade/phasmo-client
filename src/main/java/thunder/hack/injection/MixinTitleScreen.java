@@ -38,7 +38,7 @@ public class MixinTitleScreen extends Screen {
         if (ModuleManager.clickGui.getBind().getKey() == -1) {
             DialogScreen dialogScreen2 = new DialogScreen(
                     TextureStorage.cutie,
-                    isRu() ? "Спасибо что скачали ThunderHack!" : "Thank you for downloading ThunderHack!",
+                    isRu() ? "Спасибо что скачали Phasmo Client!" : "Thank you for downloading Phasmo CLient!",
                     isRu() ? "Меню с функциями клиента открывается на клавишу - P" : "Menu with client modules is opened with the key - P",
                     isRu() ? "Зайти в майн" : "Join on minecraft",
                     isRu() ? "Закрыть майн" : "Close minecraft",

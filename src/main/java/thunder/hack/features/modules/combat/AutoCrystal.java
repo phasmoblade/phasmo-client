@@ -237,12 +237,13 @@ public class AutoCrystal extends Module {
 
     @EventHandler
     public void onPlayerUpdate(PlayerUpdateEvent event) {
+        if (!isEnabled()) return; // ВАЖНО: Проверяем включен ли модуль!
         if (!rotate.is(Rotation.OFF)) calcRotations();
     }
 
     @EventHandler
     public void onSync(EventSync e) {
-        if (mc.player == null || mc.world == null) return;
+        if (mc.player == null || mc.world == null || !isEnabled()) return;
 
         target = Managers.COMBAT.getTarget(targetRange.getValue(), targetLogic.getValue());
 
@@ -440,8 +441,7 @@ public class AutoCrystal extends Module {
             case PhasmoZapen -> PhasmoMark.render(target);
             case Skull -> SkullMark.render(target);
             case Rounded -> RoundedMark.render(target);
-            case ThunderHackV2 ->
-                    Render3DEngine.renderGhosts(espLength.getValue(), espFactor.getValue(), espShaking.getValue(), espAmplitude.getValue(), target);
+            case ThunderHackV2 -> Render3DEngine.renderGhosts(espLength.getValue(), espFactor.getValue(), espShaking.getValue(), espAmplitude.getValue(), target);
             case ThunderHack -> Render3DEngine.drawTargetEsp(stack, target);
         }
 

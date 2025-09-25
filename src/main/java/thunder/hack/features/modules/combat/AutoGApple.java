@@ -25,6 +25,7 @@ public final class AutoGApple extends Module {
 
     @EventHandler
     public void onUpdate(PostPlayerUpdateEvent e) {
+        if (!isEnabled()) return; // ВАЖНО: Проверяем включен ли модуль!
         if (fullNullCheck()) return;
         if (GapInOffHand()) {
             if (mc.player.getHealth() + (absorption.getValue() ? mc.player.getAbsorptionAmount() : 0) <= health.getValue() && useDelay.passedMs(Delay.getValue())) {

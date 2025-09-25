@@ -81,8 +81,17 @@ void main()
     uv.y -= Time * 0.05;
     uv *= 6.0;
 
-    vec4 col = sin(Time * 0.1 + uv.y * 0.2 + vec4(0,2,4,6)) * 0.5 + 0.5;
-    vec4 col2 = sin(Time * 0.1 + 0.6 + uv.y * 0.2 + vec4(0,2,4,6)) * 0.5 + 0.5;
+    // Создаём анимацию для перехода между серым и белым
+    float animation1 = sin(Time * 0.1 + uv.y * 0.2) * 0.5 + 0.5;
+    float animation2 = sin(Time * 0.1 + 0.6 + uv.y * 0.2) * 0.5 + 0.5;
+    
+    // Серый и белый цвета
+    vec3 grayColor = vec3(0.6, 0.6, 0.6); // Серый
+    vec3 whiteColor = vec3(1.0, 1.0, 1.0); // Белый
+    
+    // Смешиваем серый и белый с анимацией
+    vec3 col = mix(grayColor, whiteColor, animation1);
+    vec3 col2 = mix(grayColor, whiteColor, animation2);
 
     uv += layeredNoise12(uv);
     float noise = layeredNoise12(uv);

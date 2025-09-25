@@ -87,6 +87,7 @@ public final class AutoTotem extends Module {
 
     @EventHandler
     public void onSync(EventSync e) {
+        if (!isEnabled()) return; // ВАЖНО: Проверяем включен ли модуль!
         swapTo(getItemSlot());
 
         if (rcGap.not(RCGap.Off) && (mc.player.getMainHandStack().getItem() instanceof SwordItem) && mc.options.useKey.isPressed() && !mc.player.isUsingItem())
@@ -97,6 +98,7 @@ public final class AutoTotem extends Module {
 
     @EventHandler
     public void onPacketReceive(PacketEvent.@NotNull Receive e) {
+        if (!isEnabled()) return; // ВАЖНО: Проверяем включен ли модуль!
         if (e.getPacket() instanceof EntitySpawnS2CPacket spawn)
             if (spawn.getEntityType() == EntityType.END_CRYSTAL)
                 if (getPlayerPos().squaredDistanceTo(spawn.getX(), spawn.getY(), spawn.getZ()) < 36) {

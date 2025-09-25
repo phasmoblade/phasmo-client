@@ -31,6 +31,7 @@ import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.number.StyledNumberFormat;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
@@ -123,24 +124,32 @@ public class NameTags extends Module {
                 position.z = Math.max(vector.x, position.z);
             }
 
-            String final_string = "";
+            MutableText finalText = Text.empty();
 
-            if (ping.getValue()) final_string += getPingColor(getEntityPing(ent)) + getEntityPing(ent) + "ms " + Formatting.WHITE;
-            if (gamemode.getValue()) final_string += translateGamemode(getEntityGamemode(ent)) + " ";
+            if (ping.getValue()) {
+                int p = getEntityPing(ent);
+                Formatting pf = p <= 60 ? Formatting.GREEN : (p < 120 ? Formatting.YELLOW : Formatting.RED);
+                finalText = finalText.append(Text.literal(p + "ms ").formatted(pf));
+            }
+            if (gamemode.getValue()) {
+                finalText = finalText.append(Text.literal(translateGamemode(getEntityGamemode(ent)) + " "));
+            }
 
             if (FriendManager.friends.stream().anyMatch(i -> i.contains(ent.getDisplayName().getString())) && NameProtect.hideFriends.getValue() && ModuleManager.nameProtect.isEnabled()) {
-                final_string += NameProtect.getCustomName() + " ";
+                finalText = finalText.append(Text.literal(NameProtect.getCustomName())).append(Text.literal(" "));
             } else {
-                final_string += ent.getDisplayName().getString() + " ";
+                finalText = finalText.append(ent.getDisplayName().copy()).append(Text.literal(" "));
             }
 
             if (hp.getValue() && health.is(Health.Number)) {
-                final_string += getHealthColor(getHealth(ent)) + round2(getHealth(ent)) + " ";
+                float hv = getHealth(ent);
+                Formatting hf = hv > 15 ? Formatting.GREEN : (hv > 7 ? Formatting.YELLOW : Formatting.RED);
+                finalText = finalText.append(Text.literal(round2(hv) + " ").formatted(hf));
             }
 
-            if (distance.getValue()) final_string += String.format("%.1f", mc.player.distanceTo(ent)) + "m ";
+            if (distance.getValue()) finalText = finalText.append(Text.literal(String.format("%.1f", mc.player.distanceTo(ent)) + "m "));
             if (pops.getValue() && Managers.COMBAT.getPops(ent) != 0)
-                final_string += (Formatting.RESET + "" + Managers.COMBAT.getPops(ent));
+                finalText = finalText.append(Text.literal(String.valueOf(Managers.COMBAT.getPops(ent))));
 
             if (position != null) {
                 double posX = position.x;
@@ -149,10 +158,7 @@ public class NameTags extends Module {
                 double maxEnchantY = 0;
 
                 float diff = (float) (endPosX - posX) / 2;
-                float textWidth;
-
-                if (font.getValue() == Font.Fancy) textWidth = (FontRenderers.sf_bold.getStringWidth(final_string) * 1);
-                else textWidth = mc.textRenderer.getWidth(final_string);
+                float textWidth = mc.textRenderer.getWidth(finalText);
 
                 float tagX = (float) ((posX + diff - textWidth / 2) * 1);
 
@@ -275,14 +281,10 @@ public class NameTags extends Module {
                 }
 
 
-                if (font.getValue() == Font.Fancy) {
-                    FontRenderers.sf_bold.drawString(context.getMatrices(), final_string, tagX, (float) posY - 10, -1);
-                } else {
-                    context.getMatrices().push();
-                    context.getMatrices().translate(tagX, ((float) posY - 11), 0);
-                    context.drawText(mc.textRenderer, final_string, 0, 0, -1, false);
-                    context.getMatrices().pop();
-                }
+                context.getMatrices().push();
+                context.getMatrices().translate(tagX, ((float) posY - 11), 0);
+                context.drawTextWithShadow(mc.textRenderer, finalText, 0, 0, -1);
+                context.getMatrices().pop();
 
                 if (!health.is(Health.Number)) {
                     int i = MathHelper.ceil(ent.getHealth());
@@ -336,7 +338,7 @@ public class NameTags extends Module {
                     double endPosX = position.z;
 
                     float diff = (float) (endPosX - posX) / 2;
-                    float textWidth = (FontRenderers.sf_bold.getStringWidth(final_string) * 1);
+                    float textWidth = mc.textRenderer.getWidth(final_string);
                     float tagX = (float) ((posX + diff - textWidth / 2) * 1);
 
                     Render2DEngine.drawRect(context.getMatrices(), tagX - 2, (float) (posY - 13f), textWidth + 4, 11, fillColorA.getValue().getColorObject());
@@ -359,8 +361,10 @@ public class NameTags extends Module {
                         }
                     }
 
-
-                    FontRenderers.sf_bold.drawString(context.getMatrices(), final_string, tagX, (float) posY - 10, -1);
+                    context.getMatrices().push();
+                    context.getMatrices().translate(tagX, ((float) posY - 11), 0);
+                    context.drawText(mc.textRenderer, final_string, 0, 0, -1, false);
+                    context.getMatrices().pop();
                 }
             }
         }
@@ -397,7 +401,7 @@ public class NameTags extends Module {
                 double endPosX = position.z;
 
                 float diff = (float) (endPosX - posX) / 2;
-                float textWidth = (FontRenderers.sf_bold.getStringWidth(final_string) * 1);
+                float textWidth = mc.textRenderer.getWidth(final_string);
                 float tagX = (float) ((posX + diff - textWidth / 2) * 1);
 
                 Render2DEngine.drawRect(context.getMatrices(), tagX - 2, (float) (posY - 13f), textWidth + 4, 11, fillColorA.getValue().getColorObject());
@@ -419,7 +423,10 @@ public class NameTags extends Module {
                         Render2DEngine.drawRect(context.getMatrices(), tagX + textWidth + 2, (float) (posY - 14f), 1, 11, outlineColor.getValue().getColorObject());
                     }
                 }
-                FontRenderers.sf_bold.drawString(context.getMatrices(), final_string, tagX, (float) posY - 10, -1);
+                context.getMatrices().push();
+                context.getMatrices().translate(tagX, ((float) posY - 11), 0);
+                context.drawText(mc.textRenderer, final_string, 0, 0, -1, false);
+                context.getMatrices().pop();
             }
         }
     }
@@ -448,7 +455,6 @@ public class NameTags extends Module {
     }
 
     public float getHealth(PlayerEntity ent) {
-        // Первый в комьюнити хп резольвер. Правда, еж?
         if ((mc.getNetworkHandler() != null && mc.getNetworkHandler().getServerInfo() != null && mc.getNetworkHandler().getServerInfo().address.contains("funtime") || funtimeHp.getValue())) {
             ScoreboardObjective scoreBoard = null;
             String resolvedHp = "";

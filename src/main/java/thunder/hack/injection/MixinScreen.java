@@ -56,7 +56,7 @@ public abstract class MixinScreen {
         File cfgFile = new File(configPath);
         String fileName = cfgFile.getName();
 
-        if (fileName.contains(".th")) {
+        if (fileName.contains(".phasmo")) {
             DialogScreen dialogScreen = new DialogScreen(
                     TextureStorage.questionPic,
                     isRu() ? "Обнаружен конфиг!" : "Config detected!",

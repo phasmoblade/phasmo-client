@@ -33,6 +33,7 @@ public final class TriggerBot extends Module {
 
     @EventHandler
     public void onAttack(PlayerUpdateEvent e) {
+        if (!isEnabled()) return; // ВАЖНО: Проверяем включен ли модуль!
         if (mc.player.isUsingItem() && pauseEating.getValue()) {
             return;
         }

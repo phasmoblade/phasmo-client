@@ -11,6 +11,7 @@ import thunder.hack.features.modules.client.HudEditor;
 import thunder.hack.setting.Setting;
 import thunder.hack.utility.render.Render2DEngine;
 import thunder.hack.utility.render.TextureStorage;
+import thunder.hack.utility.hud.HudFontHelper;
 
 import java.awt.*;
 
@@ -20,15 +21,59 @@ public class TPSCounter extends HudElement {
     }
 
     private final Setting<Boolean> extraTps = new Setting<>("ExtraTPS", true);
+    
+    // Настройки фона
+    private final Setting<Boolean> showBackground = new Setting<>("ShowBackground", true);
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100, v -> showBackground.getValue());
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true, v -> showBackground.getValue());
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f, v -> showBackground.getValue() && enableBlur.getValue());
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f, v -> showBackground.getValue() && enableBlur.getValue());
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 3f, 0f, 10f, v -> showBackground.getValue());
+    
+    // Настройки шрифта
+    private final Setting<HudFontHelper.FontStyle> fontStyle = new Setting<>("FontStyle", HudFontHelper.FontStyle.MODULES_RENDERER);
+    
+    // Вспомогательные методы для работы с шрифтами
+    private float getStringWidth(String text) {
+        return HudFontHelper.getStringWidth(text, fontStyle.getValue());
+    }
+    
+    private void drawString(DrawContext context, String text, float x, float y, int color) {
+        HudFontHelper.drawString(context, text, x, y, color, fontStyle.getValue());
+    }
 
     public void onRender2D(DrawContext context) {
         super.onRender2D(context);
         String str = "TPS " + Formatting.WHITE + Managers.SERVER.getTPS() + (extraTps.getValue() ? " [" + Managers.SERVER.getTPS2() + "]" : "");
 
-        float pX = getPosX() > mc.getWindow().getScaledWidth() / 2f ? getPosX() - FontRenderers.getModulesRenderer().getStringWidth(str) : getPosX();
+        float pX = getPosX() > mc.getWindow().getScaledWidth() / 2f ? getPosX() - getStringWidth(str) : getPosX();
 
         if(HudEditor.hudStyle.is(HudEditor.HudStyle.Blurry)) {
-            Render2DEngine.drawRoundedBlur(context.getMatrices(), pX, getPosY(), FontRenderers.getModulesRenderer().getStringWidth(str) + 21, 13f, 3, HudEditor.blurColor.getValue().getColorObject());
+            if (showBackground.getValue()) {
+                float alpha = backgroundTransparency.getValue() / 100f;
+                float cornerRadiusValue = this.cornerRadius.getValue();
+                
+                if (enableBlur.getValue()) {
+                    // Используем красивое размытие с учетом прозрачности
+                    Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                            (int)(alpha * 255));
+                    // Применяем прозрачность к blurOpacity
+                    float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                    Render2DEngine.drawRoundedBlur(context.getMatrices(), pX, getPosY(), getStringWidth(str) + 21, 13f, cornerRadiusValue, bgColor, blurStrength.getValue(), finalBlurOpacity);
+                } else {
+                    // Обычный фон без размытия
+                    Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                            HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                            (int)(alpha * 255));
+                    Render2DEngine.drawRect(context.getMatrices(), pX, getPosY(), getStringWidth(str) + 21, 13f, cornerRadiusValue, alpha, bgColor, bgColor, bgColor, bgColor);
+                }
+            } else {
+                // Если фон отключен, используем старый метод для совместимости
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), pX, getPosY(), getStringWidth(str) + 21, 13f, cornerRadius.getValue(), HudEditor.blurColor.getValue().getColorObject());
+            }
             Render2DEngine.drawRect(context.getMatrices(), pX + 14, getPosY() + 2, 0.5f, 8, new Color(0x44FFFFFF, true));
 
             Render2DEngine.setupRender();
@@ -39,7 +84,7 @@ public class TPSCounter extends HudElement {
             Render2DEngine.endRender();
         }
 
-        FontRenderers.getModulesRenderer().drawString(context.getMatrices(), str, pX + 18, getPosY() + 5, HudEditor.getColor(1).getRGB());
-        setBounds(pX, getPosY(), FontRenderers.getModulesRenderer().getStringWidth(str) + 21, 13f);
+        drawString(context, str, pX + 18, getPosY() + 5, HudEditor.getColor(1).getRGB());
+        setBounds(pX, getPosY(), getStringWidth(str) + 21, 13f);
     }
 }

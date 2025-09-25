@@ -54,4 +54,26 @@ public final class TextureStorage {
     public static final Identifier crackedSkin = Identifier.of("thunderhack", "textures/gui/elements/cracked.png");
     public static final Identifier questionPic = Identifier.of("thunderhack", "textures/gui/helper/pic1.png");
     public static final Identifier cutie = Identifier.of("thunderhack", "textures/gui/images/cutie.png");
+    
+    // AresMine
+    public static final Identifier aresmineAdmin = Identifier.of("thunderhack", "aresmine/admin.png");
+    public static final Identifier aresmineAres = Identifier.of("thunderhack", "aresmine/ares.png");
+    public static final Identifier aresmineAristocrat = Identifier.of("thunderhack", "aresmine/aristocrat.png");
+    public static final Identifier aresmineCerberus = Identifier.of("thunderhack", "aresmine/cerberus.png");
+    public static final Identifier aresmineCold = Identifier.of("thunderhack", "aresmine/cold.png");
+    public static final Identifier aresmineDefault = Identifier.of("thunderhack", "aresmine/default.png");
+    public static final Identifier aresmineHeat = Identifier.of("thunderhack", "aresmine/heat.png");
+    public static final Identifier aresmineHelper = Identifier.of("thunderhack", "aresmine/helper.png");
+    public static final Identifier aresmineHydra = Identifier.of("thunderhack", "aresmine/hydra.png");
+    public static final Identifier aresmineKronos = Identifier.of("thunderhack", "aresmine/kronos.png");
+    public static final Identifier aresmineModer = Identifier.of("thunderhack", "aresmine/moder.png");
+    public static final Identifier aresminePandar = Identifier.of("thunderhack", "aresmine/pandar.png");
+    public static final Identifier aresminePhobos = Identifier.of("thunderhack", "aresmine/phobos.png");
+    public static final Identifier aresminePhoenix = Identifier.of("thunderhack", "aresmine/phoenix.png");
+    public static final Identifier aresmineShelper = Identifier.of("thunderhack", "aresmine/shelper.png");
+    public static final Identifier aresmineSmoder = Identifier.of("thunderhack", "aresmine/smoder.png");
+    public static final Identifier aresmineSummer = Identifier.of("thunderhack", "aresmine/summer.png");
+    public static final Identifier aresmineTriton = Identifier.of("thunderhack", "aresmine/triton.png");
+    public static final Identifier aresmineWinter = Identifier.of("thunderhack", "aresmine/winter.png");
+    public static final Identifier aresmineYoutuber = Identifier.of("thunderhack", "aresmine/youtuber.png");
 }

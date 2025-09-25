@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static thunder.hack.features.hud.impl.PotionHud.getDuration;
 
 public class LegacyHud extends Module {
     public LegacyHud() {
@@ -85,7 +84,7 @@ public class LegacyHud extends Module {
         color = colorSetting.getValue().getColor();
 
         if (waterMark.getValue())
-            drawText(context, "phasmoclient build " + ThunderHack.VERSION, 2, waterMarkY.getValue());
+            drawText(context, "thunderhack v" + ThunderHack.VERSION, 2, waterMarkY.getValue());
 
         int j = (mc.currentScreen instanceof ChatScreen && !renderingUp.getValue()) ? 14 : 0;
 
@@ -313,6 +312,23 @@ public class LegacyHud extends Module {
 
                 drawText(context, dmg + "", (x + 8 - getStringWidth(dmg + "") / 2), (y - 11), new Color((int) MathUtility.clamp((red * 255.0F), 0, 255f), (int) MathUtility.clamp((green * 255.0F), 0, 255f), 0).getRGB());
             }
+        }
+    }
+    
+    // Метод для получения длительности эффекта зелья
+    public static String getDuration(StatusEffectInstance effect) {
+        if (effect.getDuration() == -1) {
+            return "∞";
+        }
+        
+        int seconds = effect.getDuration() / 20;
+        int minutes = seconds / 60;
+        int remainingSeconds = seconds % 60;
+        
+        if (minutes > 0) {
+            return String.format("%d:%02d", minutes, remainingSeconds);
+        } else {
+            return String.format("%ds", remainingSeconds);
         }
     }
 }

@@ -769,6 +769,14 @@ public class Render2DEngine {
         BufferRenderer.drawWithGlobalProgram(bb.end());
         endRender();
     }
+    
+    public static void drawMainMenuShader(MatrixStack matrices, float x, float y, float width, float height, float r1, float g1, float b1, float r2, float g2, float b2) {
+        BufferBuilder bb = preShaderDraw(matrices, x, y, width, height);
+        MAIN_MENU_PROGRAM.setParameters(x, y, width, height, r1, g1, b1, r2, g2, b2);
+        MAIN_MENU_PROGRAM.use();
+        BufferRenderer.drawWithGlobalProgram(bb.end());
+        endRender();
+    }
 
     public static BufferBuilder preShaderDraw(MatrixStack matrices, float x, float y, float width, float height) {
         setupRender();

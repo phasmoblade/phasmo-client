@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import thunder.hack.utility.hud.HudFontHelper;
+import thunder.hack.setting.Setting;
+import thunder.hack.setting.impl.BooleanSettingGroup;
 
 public class StaffBoard extends HudElement {
     private static final Pattern validUserPattern = Pattern.compile("^\\w{3,16}$");
@@ -27,12 +30,20 @@ public class StaffBoard extends HudElement {
     private Map<String, Identifier> skinMap = new HashMap<>();
 
     private float vAnimation, hAnimation;
+    
+    // Настройки фона и шрифтов
+    private final Setting<BooleanSettingGroup> backgroundSettings = new Setting<>("Background", new BooleanSettingGroup(true));
+    private final Setting<Integer> backgroundTransparency = new Setting<>("BackgroundTransparency", 100, 0, 100).addToGroup(backgroundSettings);
+    private final Setting<Boolean> enableBlur = new Setting<>("EnableBlur", true).addToGroup(backgroundSettings);
+    private final Setting<Float> blurStrength = new Setting<>("BlurStrength", 5f, 1f, 20f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> blurOpacity = new Setting<>("BlurOpacity", 0.8f, 0.1f, 1f, v -> enableBlur.getValue()).addToGroup(backgroundSettings);
+    private final Setting<Float> cornerRadius = new Setting<>("CornerRadius", 3f, 0f, 10f, v -> backgroundSettings.getValue().isEnabled()).addToGroup(backgroundSettings);
+    private final Setting<HudFontHelper.FontStyle> fontStyle = new Setting<>("FontStyle", HudFontHelper.FontStyle.SF_BOLD_MINI);
 
     public StaffBoard() {
         super("StaffBoard", 50, 50);
     }
-
-    public static List<String> getOnlinePlayer() {
+public static List<String> getOnlinePlayer() {
         return mc.player.networkHandler.getPlayerList().stream()
                 .map(PlayerListEntry::getProfile)
                 .map(GameProfile::getName)
@@ -113,8 +124,9 @@ public class StaffBoard extends HudElement {
 
             y_offset1 += 9;
 
-            float nameWidth = FontRenderers.sf_bold_mini.getStringWidth(player.split(":")[0]);
-            float timeWidth = FontRenderers.sf_bold_mini.getStringWidth((player.split(":")[1].equalsIgnoreCase("vanish") ? Formatting.RED + "V" : player.split(":")[1].equalsIgnoreCase("gm3") ? Formatting.RED + "V " + Formatting.YELLOW + "(GM3)" : Formatting.GREEN + "Z"));
+            // Используем выбранный шрифт для расчета ширины
+            float nameWidth = HudFontHelper.getStringWidth(player.split(":")[0], fontStyle.getValue());
+            float timeWidth = HudFontHelper.getStringWidth((player.split(":")[1].equalsIgnoreCase("vanish") ? Formatting.RED + "V" : player.split(":")[1].equalsIgnoreCase("gm3") ? Formatting.RED + "V " + Formatting.YELLOW + "(GM3)" : Formatting.GREEN + "Z"), fontStyle.getValue());
 
             float width = (nameWidth + timeWidth) * 1.4f;
 
@@ -128,12 +140,37 @@ public class StaffBoard extends HudElement {
         vAnimation = AnimationUtility.fast(vAnimation, 14 + y_offset1, 15);
         hAnimation = AnimationUtility.fast(hAnimation, max_width, 15);
 
-        Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, HudEditor.hudRound.getValue());
-
-        if (HudEditor.hudStyle.is(HudEditor.HudStyle.Glowing)) {
-            FontRenderers.sf_bold.drawCenteredString(context.getMatrices(), "Staff", getPosX() + hAnimation / 2, getPosY() + 4, HudEditor.textColor.getValue().getColorObject());
+        // Рендеринг фона с новыми настройками
+        if (backgroundSettings.getValue().isEnabled()) {
+            float alpha = backgroundTransparency.getValue() / 100f;
+            float cornerRadiusValue = this.cornerRadius.getValue();
+            
+            if (enableBlur.getValue()) {
+                // Используем красивое размытие с учетом прозрачности
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                        (int)(alpha * 255));
+                // Применяем прозрачность к blurOpacity
+                float finalBlurOpacity = blurOpacity.getValue() * alpha;
+                Render2DEngine.drawRoundedBlur(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, cornerRadiusValue, bgColor, blurStrength.getValue(), finalBlurOpacity);
+            } else {
+                // Обычный фон без размытия
+                Color bgColor = new Color(HudEditor.blurColor.getValue().getColorObject().getRed(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getGreen(), 
+                                        HudEditor.blurColor.getValue().getColorObject().getBlue(), 
+                                        (int)(alpha * 255));
+                Render2DEngine.drawRect(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, cornerRadiusValue, alpha, bgColor, bgColor, bgColor, bgColor);
+            }
         } else {
-            FontRenderers.sf_bold.drawGradientCenteredString(context.getMatrices(), "Staff", getPosX() + hAnimation / 2, getPosY() + 4, 10);
+            Render2DEngine.drawHudBase(context.getMatrices(), getPosX(), getPosY(), hAnimation, vAnimation, HudEditor.hudRound.getValue());
+        }
+
+        // Рендеринг заголовка с выбранным шрифтом
+        if (HudEditor.hudStyle.is(HudEditor.HudStyle.Glowing)) {
+            HudFontHelper.drawCenteredString(context, "Staff", getPosX() + hAnimation / 2, getPosY() + 4, HudEditor.textColor.getValue().getColorObject().getRGB(), fontStyle.getValue());
+        } else {
+            HudFontHelper.drawCenteredString(context, "Staff", getPosX() + hAnimation / 2, getPosY() + 4, HudEditor.getColor(10).getRGB(), fontStyle.getValue());
         }
 
         if (y_offset1 > 0) {
@@ -158,9 +195,10 @@ public class StaffBoard extends HudElement {
                 context.drawTexture(tex, (int) (getPosX() + 3), (int) (getPosY() + 16 + y_offset), 8, 8, 40, 8, 8, 8, 64, 64);
             }
 
-            FontRenderers.sf_bold_mini.drawString(context.getMatrices(), player.split(":")[0], getPosX() + 13, getPosY() + 19 + y_offset, HudEditor.textColor.getValue().getColor());
-            FontRenderers.sf_bold_mini.drawCenteredString(context.getMatrices(), (player.split(":")[1].equalsIgnoreCase("vanish") ? Formatting.RED + "O" : player.split(":")[1].equalsIgnoreCase("gm3") ? Formatting.YELLOW + "O" : Formatting.GREEN + "O"),
-                    px + (getPosX() + max_width - px) / 2f, getPosY() + 19 + y_offset, HudEditor.textColor.getValue().getColor());
+            // Рендеринг текста с выбранным шрифтом
+            HudFontHelper.drawString(context, player.split(":")[0], getPosX() + 13, getPosY() + 19 + y_offset, HudEditor.textColor.getValue().getColor(), fontStyle.getValue());
+            HudFontHelper.drawCenteredString(context, (player.split(":")[1].equalsIgnoreCase("vanish") ? Formatting.RED + "O" : player.split(":")[1].equalsIgnoreCase("gm3") ? Formatting.YELLOW + "O" : Formatting.GREEN + "O"),
+                    px + (getPosX() + max_width - px) / 2f, getPosY() + 19 + y_offset, HudEditor.textColor.getValue().getColor(), fontStyle.getValue());
             Render2DEngine.drawRect(context.getMatrices(), px, getPosY() + 17 + y_offset, 0.5f, 8, new Color(0x44FFFFFF, true));
             y_offset += 9;
         }
